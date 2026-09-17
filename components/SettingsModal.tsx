@@ -225,7 +225,7 @@ export default function SettingsModal({
                 {/* Telegram Channel */}
                 <a
                   id="about-link-telegram"
-                  href="https://t.me/Rakshittips"
+                  href="https://t.me/Mr_Rakshit_2_0"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-200/80 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700 transition-all group shadow-2xs cursor-pointer"
@@ -249,7 +249,7 @@ export default function SettingsModal({
                 {/* GitHub Repository */}
                 <a
                   id="about-link-github"
-                  href="https://github.com"
+                  href="https://github.com/Rakshittips/Mr-PDFKit"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-200/80 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700 transition-all group shadow-2xs cursor-pointer"
@@ -486,7 +486,7 @@ export default function SettingsModal({
                 <div className="pt-2 flex flex-col gap-2.5">
                   <a
                     id="btn-telegram-dm-sponsor"
-                    href="https://t.me/Rakshittips"
+                    href="https://t.me/Mr_Rakshit_2_0"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full py-3.5 rounded-2xl bg-[#229ED9] hover:bg-[#1e8ec3] text-white font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-95 transition-all shadow-md shadow-sky-500/20 active:scale-98"

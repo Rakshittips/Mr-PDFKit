@@ -212,7 +212,7 @@ export default function Layout({
             {/* 4. GitHub Box */}
             <a
               id="top-nav-github-btn"
-              href="https://github.com"
+              href="https://github.com/Rakshittips/Mr-PDFKit"
               target="_blank"
               rel="noopener noreferrer"
               className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white dark:bg-[#18191d] border border-gray-200 dark:border-zinc-800/80 flex items-center justify-center text-gray-600 dark:text-zinc-300 hover:text-gray-950 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-zinc-800/80 transition-all shadow-xs"
@@ -368,12 +368,22 @@ export default function Layout({
               <span>•</span>
               <a
                 id="footer-link-github"
-                href="https://github.com"
+                href="https://github.com/Rakshittips/Mr-PDFKit"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-rose-500 transition-colors font-medium"
               >
                 GitHub
+              </a>
+              <span>•</span>
+              <a
+                id="footer-link-telegram"
+                href="https://t.me/Mr_Rakshit_2_0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-sky-500 transition-colors font-medium"
+              >
+                Telegram
               </a>
             </div>
           </div>
