@@ -198,7 +198,7 @@ export default function HtmlToPdfTool({ onBack, onAddActivity, onSendToTool }: H
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Fetch URL content via server route to avoid browser CORS blocks
+  // Fetch URL content directly in browser using CORS proxy (100% static & serverless)
   const handleFetchUrl = async (targetUrl?: string) => {
     const urlToFetch = targetUrl || urlInput.trim()
     if (!urlToFetch) return
@@ -214,24 +214,52 @@ export default function HtmlToPdfTool({ onBack, onAddActivity, onSendToTool }: H
         setUrlInput(finalUrl)
       }
 
-      const res = await fetch('/api/fetch-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: finalUrl }),
+      // Validate URL
+      const parsedUrl = new URL(finalUrl)
+      if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+        throw new Error('Only http:// and https:// URLs are supported.')
+      }
+
+      // Fetch via public CORS proxy so it works on static GitHub Pages
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(finalUrl)}`
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 15000)
+
+      const res = await fetch(proxyUrl, {
+        signal: controller.signal,
       })
+      clearTimeout(timeout)
 
-      const data = await res.json()
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch webpage.')
+      if (!res.ok) {
+        throw new Error(`Failed to load webpage (Status: ${res.status}).`)
       }
 
-      setHtmlContent(data.html)
-      if (data.title) {
-        const cleanTitle = data.title.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40)
-        setDocumentTitle(cleanTitle || 'website-page')
+      let html = await res.text()
+
+      // Extract document title
+      let title = parsedUrl.hostname
+      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
+      if (titleMatch && titleMatch[1]) {
+        title = titleMatch[1].trim()
       }
-      setFetchSuccessMsg(`Loaded "${data.title || finalUrl}" successfully!`)
+
+      // Strip dangerous script tags
+      html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+
+      // Inject base href so relative assets load
+      const baseHref = parsedUrl.origin + parsedUrl.pathname.substring(0, parsedUrl.pathname.lastIndexOf('/') + 1)
+      if (html.includes('<head>')) {
+        html = html.replace('<head>', `<head><base href="${baseHref}">`)
+      } else if (html.includes('<head ')) {
+        html = html.replace(/<head[^>]*>/, `$&<base href="${baseHref}">`)
+      } else {
+        html = `<base href="${baseHref}">` + html
+      }
+
+      setHtmlContent(html)
+      const cleanTitle = title.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40)
+      setDocumentTitle(cleanTitle || 'website-page')
+      setFetchSuccessMsg(`Loaded "${title}" successfully!`)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to fetch website'
       setFetchError(msg)

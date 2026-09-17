@@ -1,5 +1,13 @@
 import type {NextConfig} from 'next';
 
+const repoName = process.env.GITHUB_REPOSITORY
+  ? process.env.GITHUB_REPOSITORY.split('/')[1]
+  : '';
+const isUserPage = repoName.toLowerCase().endsWith('.github.io');
+const autoBasePath =
+  process.env.GITHUB_ACTIONS && repoName && !isUserPage ? `/${repoName}` : '';
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || autoBasePath || '';
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   eslint: {
@@ -8,8 +16,12 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  basePath: basePath || undefined,
+  assetPrefix: basePath || undefined,
+  trailingSlash: true,
   // Allow access to remote image placeholder.
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -19,7 +31,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  output: 'standalone',
+  output: 'export',
   transpilePackages: ['motion'],
   webpack: (config, {dev}) => {
     config.resolve.alias = {

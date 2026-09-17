@@ -15,8 +15,18 @@ export async function getPdfJs() {
   try {
     const pdfjs = await import('pdfjs-dist/build/pdf.js')
     if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-      // Use locally hosted worker, with fallback to unpkg CDN if needed
-      pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js'
+      if (typeof window !== 'undefined') {
+        try {
+          const basePath = window.location.pathname.endsWith('/')
+            ? window.location.pathname
+            : window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1)
+          pdfjs.GlobalWorkerOptions.workerSrc = `${window.location.origin}${basePath}pdf.worker.min.js`
+        } catch {
+          pdfjs.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js'
+        }
+      } else {
+        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js'
+      }
     }
     pdfjsCache = pdfjs
     return pdfjs
