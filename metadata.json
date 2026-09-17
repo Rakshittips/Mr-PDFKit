@@ -1,6 +1,6 @@
 {
   "name": "Mr PDFKit",
-  "description": "Privacy-first local PDF utility. Merge, split, compress, rotate, organize, convert, protect, sign, and edit PDFs 100% locally on your device with Zero-Server Architecture.",
+  "description": "Privacy-first local PDF utility. Open, read, merge, split, compress, rotate, organize, convert, protect, sign, and edit PDFs 100% locally on your device with Zero-Server Architecture.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

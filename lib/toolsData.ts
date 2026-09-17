@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   Layers,
   Scissors,
   Zap,
@@ -21,6 +22,17 @@ import {
 import { Tool } from './types'
 
 export const toolsData: Tool[] = [
+  {
+    id: 'open-pdf',
+    title: 'Open PDF',
+    desc: 'Fast in-browser PDF reader with zoom controls, page jumping, thumbnail sidebar, print, and full-screen view.',
+    icon: BookOpen,
+    implemented: true,
+    path: '/open-pdf',
+    category: 'Edit',
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bg: 'bg-emerald-50 dark:bg-emerald-950/40',
+  },
   {
     id: 'merge',
     title: 'Merge PDF',

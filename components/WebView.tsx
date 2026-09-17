@@ -40,7 +40,7 @@ export default function WebView({ onSelectTool, activityHistory, onClearHistory 
   }, [searchQuery, selectedCategory])
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 overflow-x-hidden">
       {/* Hero Banner */}
       <div className="text-center max-w-3xl mx-auto mb-10 md:mb-14">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-black uppercase tracking-wider mb-5">
@@ -62,7 +62,7 @@ export default function WebView({ onSelectTool, activityHistory, onClearHistory 
             <Search className="absolute left-4 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search all 17 PDF tools..."
+              placeholder={`Search all ${toolsData.length} PDF tools...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-10 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl shadow-sm hover:border-gray-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm font-semibold text-gray-900 dark:text-white placeholder-gray-400"
@@ -91,9 +91,9 @@ export default function WebView({ onSelectTool, activityHistory, onClearHistory 
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
                   isSelected
-                    ? 'bg-gray-950 dark:bg-white text-white dark:text-gray-950 shadow-md'
+                    ? 'bg-rose-500 dark:bg-rose-600 text-white shadow-md shadow-rose-500/20'
                     : 'bg-white dark:bg-zinc-900 text-gray-600 dark:text-zinc-400 border border-gray-200/80 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700'
                 }`}
               >
@@ -101,8 +101,8 @@ export default function WebView({ onSelectTool, activityHistory, onClearHistory 
                 <span
                   className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                     isSelected
-                      ? 'bg-white/20 dark:bg-black/20 text-white dark:text-gray-950'
-                      : 'bg-gray-100 dark:bg-zinc-800 text-gray-500'
+                      ? 'bg-white/25 text-white'
+                      : 'bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400'
                   }`}
                 >
                   {count}

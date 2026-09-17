@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '@/components/Layout'
 import WebView from '@/components/WebView'
+import OpenPdfTool from '@/components/tools/OpenPdfTool'
 import MergeTool from '@/components/tools/MergeTool'
 import SplitTool from '@/components/tools/SplitTool'
 import CompressTool from '@/components/tools/CompressTool'
@@ -106,6 +107,15 @@ export default function Home() {
 
   const renderTool = () => {
     switch (activeToolId) {
+      case 'open-pdf':
+        return (
+          <OpenPdfTool
+            initialFile={pipelinedFile}
+            onBack={handleNavigateHome}
+            onAddActivity={handleAddActivity}
+            onSendToTool={handleSendToTool}
+          />
+        )
       case 'merge':
         return (
           <MergeTool
