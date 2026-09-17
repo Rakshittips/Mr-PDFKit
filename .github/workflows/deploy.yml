@@ -24,18 +24,19 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: "22"
 
       - name: Setup Pages
+        id: pages
         uses: actions/configure-pages@v5
 
       - name: Install dependencies
-        run: npm ci || npm install
+        run: npm install
 
       - name: Build with Next.js
         run: npm run build
         env:
+          NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
           GITHUB_PAGES: "true"
 
       - name: Upload artifact
