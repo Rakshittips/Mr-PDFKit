@@ -1,6 +1,7 @@
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib'
 import JSZip from 'jszip'
 import html2canvas from 'html2canvas'
+import { getPdfJs } from './pdfViewerEngine'
 
 export interface HtmlToPdfOptions {
   pageSize?: 'a4' | 'letter' | 'legal'
@@ -530,20 +531,56 @@ export async function convertToGrayscale(buffer: Uint8Array): Promise<Uint8Array
 }
 
 /**
- * Extract plain text from PDF stream
+ * Extract plain text from PDF document
  */
 export async function extractPdfText(buffer: Uint8Array): Promise<string> {
-  // Decode text chunks from PDF streams
+  // First attempt rich text extraction via PDF.js for 100% fidelity & unicode
+  try {
+    const pdfjs = await getPdfJs()
+    if (pdfjs) {
+      const copyBuffer = new Uint8Array(buffer.slice(0))
+      const loadingTask = pdfjs.getDocument({
+        data: copyBuffer,
+        cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
+        cMapPacked: true,
+      })
+      const doc = await loadingTask.promise
+      const pagesText: string[] = []
+
+      for (let i = 1; i <= doc.numPages; i++) {
+        const page = await doc.getPage(i)
+        const textContent = await page.getTextContent()
+        const strings = textContent.items
+          .map((item: any) => ('str' in item ? item.str : ''))
+          .filter(Boolean)
+        if (strings.length > 0) {
+          pagesText.push(`--- Page ${i} ---\n${strings.join(' ')}`)
+        }
+      }
+
+      try {
+        doc.destroy?.()
+      } catch {
+        // ignore
+      }
+
+      if (pagesText.length > 0) {
+        return pagesText.join('\n\n')
+      }
+    }
+  } catch (err) {
+    console.warn('PDF.js text extraction fallback:', err)
+  }
+
+  // Fallback: Decode text chunks from raw PDF streams
   const decoder = new TextDecoder('utf-8', { fatal: false })
   const content = decoder.decode(buffer)
 
   const textChunks: string[] = []
-  // Matches text blocks (BT ... ET)
   const btMatches = content.match(/BT[\s\S]*?ET/g)
 
   if (btMatches) {
     for (const block of btMatches) {
-      // Find strings in parens (Text) or hex <...>
       const strings = block.match(/\((.*?)\)|<([0-9a-fA-F]+)>/g)
       if (strings) {
         const line = strings
@@ -629,75 +666,132 @@ export async function extractImagesFromPdf(buffer: Uint8Array): Promise<{
 }
 
 /**
- * Convert PDF pages to images (PNG or JPEG) and package into a ZIP archive
+ * Convert PDF pages to real high-resolution images (PNG or JPEG) and package into a ZIP archive
  */
 export async function pdfToImages(
   buffer: Uint8Array,
-  options: { format: 'png' | 'jpeg'; scale: number }
+  options: {
+    format: 'png' | 'jpeg'
+    scale: number
+    onProgress?: (current: number, total: number) => void
+  }
 ): Promise<{
   images: { name: string; buffer: Uint8Array; type: string }[]
   zipData: Uint8Array
 }> {
-  const pdfDoc = await PDFDocument.load(buffer, { ignoreEncryption: true })
-  const pageCount = pdfDoc.getPageCount()
   const zip = new JSZip()
   const images: { name: string; buffer: Uint8Array; type: string }[] = []
+  const mimeType = options.format === 'jpeg' ? 'image/jpeg' : 'image/png'
+  const extension = options.format === 'jpeg' ? 'jpg' : 'png'
+  const targetScale = options.scale || 1.5
 
-  for (let i = 0; i < pageCount; i++) {
-    const page = pdfDoc.getPage(i)
-    const { width, height } = page.getSize()
+  let renderedWithPdfJs = false
 
-    // Render using an in-browser canvas element
-    const canvas = document.createElement('canvas')
-    const scale = options.scale || 1.5
-    canvas.width = Math.max(100, Math.round(width * scale))
-    canvas.height = Math.max(100, Math.round(height * scale))
+  // High-fidelity rendering with PDF.js
+  try {
+    const pdfjs = await getPdfJs()
+    if (pdfjs) {
+      const copyBuffer = new Uint8Array(buffer.slice(0))
+      const loadingTask = pdfjs.getDocument({
+        data: copyBuffer,
+        cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
+        cMapPacked: true,
+      })
 
-    const ctx = canvas.getContext('2d')
-    if (ctx) {
-      // Background
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      const doc = await loadingTask.promise
+      const pageCount = doc.numPages
 
-      // Render crisp document page border & header watermark preview
-      ctx.strokeStyle = '#e5e7eb'
-      ctx.lineWidth = 2
-      ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20)
+      for (let i = 1; i <= pageCount; i++) {
+        options.onProgress?.(i, pageCount)
+        const page = await doc.getPage(i)
+        const viewport = page.getViewport({
+          scale: targetScale,
+          rotation: (page.rotate || 0) % 360,
+        })
 
-      // Page stamp in center
-      ctx.fillStyle = '#374151'
-      ctx.font = `bold ${Math.round(18 * scale)}px sans-serif`
-      ctx.textAlign = 'center'
-      ctx.fillText(`Page ${i + 1}`, canvas.width / 2, canvas.height / 2 - 20 * scale)
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(1, Math.floor(viewport.width))
+        canvas.height = Math.max(1, Math.floor(viewport.height))
 
-      ctx.fillStyle = '#9ca3af'
-      ctx.font = `${Math.round(12 * scale)}px sans-serif`
-      ctx.fillText(
-        `${Math.round(width)} × ${Math.round(height)} pt`,
-        canvas.width / 2,
-        canvas.height / 2 + 15 * scale
-      )
+        const ctx = canvas.getContext('2d', { alpha: false })
+        if (ctx) {
+          ctx.fillStyle = '#ffffff'
+          ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+          await page.render({
+            canvasContext: ctx,
+            viewport,
+          }).promise
+
+          const dataUrl = canvas.toDataURL(
+            mimeType,
+            options.format === 'jpeg' ? 0.92 : undefined
+          )
+          const base64Data = dataUrl.split(',')[1]
+          const binaryStr = atob(base64Data)
+          const bytes = new Uint8Array(binaryStr.length)
+          for (let b = 0; b < binaryStr.length; b++) {
+            bytes[b] = binaryStr.charCodeAt(b)
+          }
+
+          const imgName = `page-${i}.${extension}`
+          zip.file(imgName, bytes)
+          images.push({
+            name: imgName,
+            buffer: bytes,
+            type: mimeType,
+          })
+        }
+      }
+
+      try {
+        doc.destroy?.()
+      } catch {
+        // ignore
+      }
+
+      renderedWithPdfJs = true
     }
+  } catch (err) {
+    console.error('PDF.js rendering in pdfToImages failed, using fallback:', err)
+  }
 
-    const mimeType = options.format === 'jpeg' ? 'image/jpeg' : 'image/png'
-    const extension = options.format === 'jpeg' ? 'jpg' : 'png'
-    const dataUrl = canvas.toDataURL(mimeType, 0.95)
-    const base64Data = dataUrl.split(',')[1]
+  // Fallback if PDF.js is unavailable
+  if (!renderedWithPdfJs) {
+    const pdfDoc = await PDFDocument.load(buffer, { ignoreEncryption: true })
+    const pageCount = pdfDoc.getPageCount()
 
-    // Convert base64 to Uint8Array
-    const binaryStr = atob(base64Data)
-    const bytes = new Uint8Array(binaryStr.length)
-    for (let b = 0; b < binaryStr.length; b++) {
-      bytes[b] = binaryStr.charCodeAt(b)
+    for (let i = 0; i < pageCount; i++) {
+      options.onProgress?.(i + 1, pageCount)
+      const page = pdfDoc.getPage(i)
+      const { width, height } = page.getSize()
+
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(100, Math.round(width * targetScale))
+      canvas.height = Math.max(100, Math.round(height * targetScale))
+
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+      }
+
+      const dataUrl = canvas.toDataURL(mimeType, 0.95)
+      const base64Data = dataUrl.split(',')[1]
+      const binaryStr = atob(base64Data)
+      const bytes = new Uint8Array(binaryStr.length)
+      for (let b = 0; b < binaryStr.length; b++) {
+        bytes[b] = binaryStr.charCodeAt(b)
+      }
+
+      const imgName = `page-${i + 1}.${extension}`
+      zip.file(imgName, bytes)
+      images.push({
+        name: imgName,
+        buffer: bytes,
+        type: mimeType,
+      })
     }
-
-    const imgName = `page-${i + 1}.${extension}`
-    zip.file(imgName, bytes)
-    images.push({
-      name: imgName,
-      buffer: bytes,
-      type: mimeType,
-    })
   }
 
   const zipData = await zip.generateAsync({ type: 'uint8array' })

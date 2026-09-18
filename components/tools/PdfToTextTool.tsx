@@ -134,30 +134,30 @@ export default function PdfToTextTool({ initialFile, onBack, onAddActivity }: Pd
         </div>
       ) : !extractedText ? (
         <div className="space-y-6">
-          <div className="bg-white dark:bg-zinc-900/60 border border-gray-100 dark:border-zinc-800 rounded-3xl p-6 flex items-center justify-between shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
-                <FileText size={24} />
+          <div className="bg-white dark:bg-zinc-900/60 border border-gray-100 dark:border-zinc-800 rounded-3xl p-4 sm:p-6 flex items-center justify-between gap-3 shadow-sm min-w-0 max-w-full">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center shrink-0">
+                <FileText size={22} />
               </div>
-              <div>
-                <h4 className="text-base font-bold text-gray-900 dark:text-white truncate max-w-sm">
+              <div className="min-w-0 flex-1">
+                <h4 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white truncate block" title={file.name}>
                   {file.name}
                 </h4>
-                <p className="text-xs text-gray-400 font-medium">
-                  {file.pageCount} pages • {formatBytes(file.size)}
+                <p className="text-xs text-gray-400 font-medium truncate">
+                  {file.pageCount} {file.pageCount === 1 ? 'page' : 'pages'} • {formatBytes(file.size)}
                 </p>
               </div>
             </div>
 
             <button
               onClick={() => setFile(null)}
-              className="text-xs font-bold text-gray-400 hover:text-red-500 uppercase tracking-wider"
+              className="shrink-0 text-xs font-bold text-gray-400 hover:text-red-500 uppercase tracking-wider px-2 py-1"
             >
               Change File
             </button>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900/60 border border-gray-100 dark:border-zinc-800 rounded-3xl p-6 shadow-sm flex items-center justify-between">
+          <div className="bg-white dark:bg-zinc-900/60 border border-gray-100 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h4 className="font-bold text-gray-900 dark:text-white text-sm mb-1">
                 Zero-Server Text Extraction
@@ -170,7 +170,7 @@ export default function PdfToTextTool({ initialFile, onBack, onAddActivity }: Pd
             <button
               onClick={handleExtract}
               disabled={loading}
-              className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase text-xs tracking-wider shadow-lg shadow-blue-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase text-xs tracking-wider shadow-lg shadow-blue-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

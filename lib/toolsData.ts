@@ -167,8 +167,8 @@ export const toolsData: Tool[] = [
   },
   {
     id: 'pdf-to-image',
-    title: 'PDF to Image',
-    desc: 'Convert document pages into high-quality images.',
+    title: 'PDF to PNG',
+    desc: 'Convert document pages into high-resolution PNG images.',
     icon: FileImage,
     implemented: true,
     path: '/pdf-to-image',
